@@ -9,7 +9,6 @@ const AdminDashboard = () => {
   const [userCount, setUserCount] = useState(0);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [dailyUserGrowth, setDailyUserGrowth] = useState([]);
-  const [monthlyMessageCount, setMonthlyMessageCount] = useState([]);
 
   // Загрузка статистики
   useEffect(() => {
@@ -28,15 +27,6 @@ const AdminDashboard = () => {
         setDailyUserGrowth(data.dailyGrowth || []);
       })
       .catch(error => console.error('Ошибка загрузки статистики за день: ', error));
-
-    // Здесь также можно загрузить статистику сообщений, если она доступна
-    // Например, запрос на количество отправленных сообщений за месяц
-    fetch('https://tyuiu-rag-bot-production.up.railway.app/api/v1/messages/count-per-month/')
-      .then(response => response.json())
-      .then(data => {
-        setMonthlyMessageCount(data.monthlyMessageCount || []);
-      })
-      .catch(error => console.error('Ошибка загрузки статистики сообщений: ', error));
 
   }, []);
 

@@ -33,43 +33,52 @@ const AdminDashboard = () => {
   // Отправка сообщения
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (message && (recipientType === 'all' || phoneNumber)) {
-      const url = new URL('https://tyuiu-rag-bot-production.up.railway.app/admin/');
+    
+    // Проверка, что сообщение есть и что либо выбрано 'all', либо введен номер телефона
+    if (message && (recipientType === 'all' || (recipientType === 'phone' && phoneNumber))) {
+      const url = 'https://tyuiu-rag-bot-production.up.railway.app/api/v1/notifications/';
+  
+      // Формируем объект с параметрами
       const params = {
         method: recipientType,
         value: phoneNumber,
         message: message
       };
-      
-      // Добавляем параметры в URL
-      Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-      
+  
+      // Проверка на пустой телефон, если выбирается 'phone'
+      if (recipientType === 'phone' && !phoneNumber) {
+        alert('Пожалуйста, введите номер телефона.');
+        return;
+      }
+  
+      // Отправляем POST-запрос
       fetch(url, {
-        method: 'GET',
+        method: 'POST',  // Используем POST-запрос
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',  // Указываем, что отправляем JSON
+        },
+        body: JSON.stringify(params),  // Параметры передаются в теле запроса в формате JSON
       })
-      .then(response => {
-        // Проверяем, что ответ успешный (статус 200)
-        if (!response.ok) {
-          throw new Error(`Ошибка: ${response.status}`);
-        }
-        return response.json(); // Если ответ успешный, пытаемся распарсить JSON
-      })
-      .then(data => {
-        if (data.success) {
-          alert('Сообщение успешно отправлено');
-          setMessage('');
-          setPhoneNumber('');
-        } else {
-          alert('Ошибка отправки сообщения');
-        }
-      })
-      .catch(error => {
-        console.error('Ошибка отправки сообщения: ', error);
-        alert('Что-то пошло не так. Пожалуйста, попробуйте позже.');
-      });
+        .then(response => {
+          // Проверяем, что ответ успешный (статус 200)
+          if (!response.ok) {
+            throw new Error(`Ошибка: ${response.status}`);
+          }
+          return response.json();  // Парсим ответ как JSON
+        })
+        .then(data => {
+          if (data.success) {
+            alert('Сообщение успешно отправлено');
+            setMessage('');
+            setPhoneNumber('');
+          } else {
+            alert('Ошибка отправки сообщения');
+          }
+        })
+        .catch(error => {
+          console.error('Ошибка отправки сообщения: ', error);
+          alert('Что-то пошло не так. Пожалуйста, попробуйте позже.');
+        });
     } else {
       alert('Пожалуйста, заполните все поля.');
     }
@@ -102,16 +111,16 @@ const AdminDashboard = () => {
             <option value="phone">По номеру телефона</option>
           </select>
           {recipientType === 'phone' && (
-            <input 
-              type="text" 
-              placeholder="+7 (XXX) XXX-XX-XX" 
-              value={phoneNumber} 
+            <input
+              type="text"
+              placeholder="+7 (XXX) XXX-XX-XX"
+              value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
             />
           )}
-          <textarea 
-            placeholder="Введите ваше сообщение..." 
-            value={message} 
+          <textarea
+            placeholder="Введите ваше сообщение..."
+            value={message}
             onChange={(e) => setMessage(e.target.value)}
           ></textarea>
           <button type="submit">Отправить сообщение</button>

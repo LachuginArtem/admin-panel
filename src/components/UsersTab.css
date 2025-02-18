@@ -1,15 +1,103 @@
-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  
-  th, td {
-    padding: 8px;
-    text-align: left;
-    border: 1px solid #ddd;
-  }
-  
-  th {
-    background-color: #f2f2f2;
-  }
-  
+.users-container {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  padding-right: 40px; 
+  background-color: #f4f7fc;
+  border-radius: 12px;
+  width: calc(100vw - 70px);  
+  box-sizing: border-box;
+}
+
+
+.left-panel, .center-panel, .right-panel {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  flex: 1;
+}
+
+.message-count-card {
+  background: #e3f2fd;
+  border-radius: 12px;
+  padding: 15px;
+  text-align: center;
+}
+
+.input-field {
+  width: 96%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.fetch-button {
+  width: 100%;
+  padding: 10px;
+  background-color: #4c9aff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.message-history {
+  margin-top: 20px;
+}
+
+.message-card {
+  background: #f4f7fc;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.subscribers-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-size: 16px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.subscribers-table thead {
+  background-color: #4c9aff;
+  color: #fff;
+}
+
+.subscribers-table th,
+.subscribers-table td {
+  padding: 12px 15px;
+  text-align: left;
+}
+
+.subscribers-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.subscribers-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.subscribers-table tbody tr:hover {
+  background-color: #f1f1f1;
+}
+.toggle-history-button {
+  background-color: #f0f0f0;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 10px;
+  transition: background-color 0.3s;
+}
+
+.toggle-history-button:hover {
+  background-color: #e0e0e0;
+}

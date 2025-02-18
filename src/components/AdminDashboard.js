@@ -34,18 +34,29 @@ const AdminDashboard = () => {
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (message && (recipientType === 'all' || phoneNumber)) {
-      fetch('/api/v1/messages/send', {
-        method: 'POST',
+      const url = new URL('https://tyuiu-rag-bot-production.up.railway.app/admin/');
+      const params = {
+        method: recipientType,
+        value: phoneNumber,
+        message: message
+      };
+      
+      // Добавляем параметры в URL
+      Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+      
+      fetch(url, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          method: recipientType,
-          value: phoneNumber,
-          message: message
-        })
+        }
       })
-      .then(response => response.json())
+      .then(response => {
+        // Проверяем, что ответ успешный (статус 200)
+        if (!response.ok) {
+          throw new Error(`Ошибка: ${response.status}`);
+        }
+        return response.json(); // Если ответ успешный, пытаемся распарсить JSON
+      })
       .then(data => {
         if (data.success) {
           alert('Сообщение успешно отправлено');
@@ -55,11 +66,16 @@ const AdminDashboard = () => {
           alert('Ошибка отправки сообщения');
         }
       })
-      .catch(error => console.error('Ошибка отправки сообщения: ', error));
+      .catch(error => {
+        console.error('Ошибка отправки сообщения: ', error);
+        alert('Что-то пошло не так. Пожалуйста, попробуйте позже.');
+      });
     } else {
       alert('Пожалуйста, заполните все поля.');
     }
   };
+  
+  
 
   return (
     <div className="container">

@@ -7,7 +7,7 @@
 }
 
 .left-panel {
-  flex: 0 0 70%; /* 70% ширины для левой панели */
+  flex: 0 0 70%; 
   background-color: #f4f7fa;
   border-radius: 8px;
   padding: 20px;
@@ -15,12 +15,14 @@
 }
 
 .right-panel {
-  flex: 0 0 30%; /* 30% ширины для правой панели */
+  flex: 0 0 30%; 
   background-color: #fff;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  height: 350px; 
 }
+
 
 h2 {
   color: #333;
@@ -30,7 +32,7 @@ h2 {
 
 .chart-container {
   width: 100%;
-  height: 400px; /* Можно адаптировать высоту */
+  height: 400px;
 }
 
 .statistics {
@@ -115,11 +117,11 @@ input:focus, textarea:focus, select:focus {
 }
 
 .message-input::placeholder {
-  font-family: 'Arial', sans-serif;  /* Изменяем шрифт */
-  font-size: 14px;                   /* Размер шрифта */
-  color: #888;                       /* Цвет текста */
-  font-style: italic;                /* Курсив (по желанию) */
-  opacity: 1;                        /* Полная непрозрачность */
+  font-family: 'Arial', sans-serif;  
+  font-size: 14px;                   
+  color: #888;                       
+  font-style: italic;                
+  opacity: 1;                        
 }
 .progress-bar-container {
   margin-top: 20px;
@@ -141,4 +143,4 @@ input:focus, textarea:focus, select:focus {
 .progress-bar-container p {
   text-align: right;
   font-weight: bold;
-}
+} 

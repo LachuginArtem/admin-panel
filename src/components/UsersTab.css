@@ -2,21 +2,31 @@
   display: flex;
   gap: 20px;
   padding: 20px;
-  padding-right: 40px; 
+  padding-right: 40px;
   background-color: #f4f7fc;
   border-radius: 12px;
-  width: calc(100vw - 70px);  
+  width: calc(100vw - 70px);
   box-sizing: border-box;
+  flex-wrap: wrap;
 }
 
-
-.left-panel, .center-panel, .right-panel {
+.left-panel,
+.center-panel,
+.right-panel {
   background: #fff;
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   flex: 1;
+  min-width: 300px;
 }
+
+.right-panel {
+  height: 70vh !important;
+  max-height: 70vh !important;
+  overflow-y: auto;
+}
+
 
 .message-count-card {
   background: #e3f2fd;
@@ -41,10 +51,20 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.fetch-button:hover {
+  background-color: #357ae8;
 }
 
 .message-history {
   margin-top: 20px;
+  max-height: none;  
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: repeat(3, auto); 
+  gap: 10px;
 }
 
 .message-card {
@@ -54,6 +74,7 @@
   margin-bottom: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
 .subscribers-table {
   width: 100%;
   border-collapse: collapse;
@@ -86,6 +107,7 @@
 .subscribers-table tbody tr:hover {
   background-color: #f1f1f1;
 }
+
 .toggle-history-button {
   background-color: #f0f0f0;
   color: #333;
@@ -100,4 +122,16 @@
 
 .toggle-history-button:hover {
   background-color: #e0e0e0;
+}
+
+@media (max-width: 768px) {
+  .users-container {
+    flex-direction: column;
+  }
+
+  .left-panel,
+  .center-panel,
+  .right-panel {
+    width: 100%;
+  }
 }

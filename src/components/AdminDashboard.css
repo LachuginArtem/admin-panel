@@ -1,5 +1,11 @@
+
+* {
+  box-sizing: border-box;
+}
+
 .dashboard-container {
   display: flex;
+  flex-flow: row nowrap;
   justify-content: space-between;
   gap: 20px;
   padding: 20px;
@@ -7,7 +13,8 @@
 }
 
 .left-panel {
-  flex: 0 0 70%; 
+  flex: 1 1 45%;  /* изменено с flex: 1 */
+  min-width: 250px;  /* уменьшено значение для минимальной ширины */
   background-color: #f4f7fa;
   border-radius: 8px;
   padding: 20px;
@@ -15,38 +22,42 @@
 }
 
 .right-panel {
-  flex: 0 0 30%; 
+  flex: 1 1 45%;  /* изменено с flex: 0 0 30% */
+  min-width: 250px;  /* уменьшено значение для минимальной ширины */
   background-color: #fff;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  height: 350px; 
 }
-
 
 h2 {
   color: #333;
-  font-size: 24px;
-  margin-bottom: 20px;
+  font-size: 22px;
+  margin-bottom: 15px;
 }
 
 .chart-container {
   width: 100%;
-  height: 400px;
+  height: auto;
+  min-height: 300px;
 }
 
 .statistics {
   display: flex;
+  flex-wrap: wrap;
   gap: 15px;
   margin-top: 20px;
 }
 
 .stat-card {
   flex: 1;
+  min-width: 140px;
   background: #bdd2ff;
   padding: 15px;
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  font-weight: bold;
 }
 
 .message-form {
@@ -57,7 +68,6 @@ h2 {
 
 .recipient-select {
   display: flex;
-  justify-content: space-between;
   align-items: center;
 }
 
@@ -75,20 +85,25 @@ h2 {
   flex-direction: column;
 }
 
-.input-field {
-  padding: 12px;
-  font-size: 16px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: #fff;
-}
-
+.input-field,
 .message-input {
   padding: 12px;
   font-size: 16px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  min-height: 120px;
+  background-color: #fff;
+  transition: border-color 0.3s ease-in-out;
+}
+
+.input-field:focus,
+.message-input:focus,
+.recipient-dropdown:focus {
+  border-color: #5cb85c;
+  outline: none;
+}
+
+.message-input {
+  min-height: 100px;
   resize: vertical;
 }
 
@@ -104,25 +119,19 @@ h2 {
 }
 
 .send-button:hover {
-  background-color: #4cae4c;
+  background-color: #4285f4;
 }
 
 .send-button:active {
-  background-color: #449d44;
-}
-
-input:focus, textarea:focus, select:focus {
-  outline: none;
-  border-color: #5cb85c;
+  background-color: #357ae8;
 }
 
 .message-input::placeholder {
-  font-family: 'Arial', sans-serif;  
-  font-size: 14px;                   
-  color: #888;                       
-  font-style: italic;                
-  opacity: 1;                        
+  font-size: 14px;
+  color: #888;
+  font-style: italic;
 }
+
 .progress-bar-container {
   margin-top: 20px;
 }
@@ -133,14 +142,77 @@ input:focus, textarea:focus, select:focus {
   background-color: #e0e0e0;
   border-radius: 10px;
   overflow: hidden;
+  position: relative;
 }
 
 .progress-bar-fill {
   height: 100%;
   background-color: #749df5;
+  transition: width 0.6s ease-in-out;
 }
 
 .progress-bar-container p {
   text-align: right;
   font-weight: bold;
-} 
+}
+
+/* Мобильные стили */
+@media (max-width: 1024px) {
+  .dashboard-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .left-panel,
+  .right-panel {
+    width: 100%;
+    min-width: unset;  /* Убираем минимальную ширину для мобильных */
+  }
+}
+
+@media (max-width: 768px) {
+  .statistics {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .stat-card {
+    width: 90%;
+  }
+
+  .send-button {
+    font-size: 16px;
+    padding: 10px;
+  }
+
+  .progress-bar {
+    height: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-container {
+    padding: 10px;
+  }
+
+  .left-panel,
+  .right-panel {
+    padding: 15px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  .input-field,
+  .message-input {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .send-button {
+    font-size: 14px;
+    padding: 10px;
+  }
+}
+

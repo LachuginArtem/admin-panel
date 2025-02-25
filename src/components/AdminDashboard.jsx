@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Chart, registerables } from 'chart.js';
-import './AdminDashboard.css'; // Подключение стилей
+import './AdminDashboard.css';
 Chart.register(...registerables);
 
 const AdminDashboard = () => {

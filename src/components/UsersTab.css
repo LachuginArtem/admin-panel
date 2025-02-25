@@ -1,7 +1,6 @@
 .users-container {
   display: flex;
   gap: 20px;
-  padding: 20px;
   padding-right: 40px;
   background-color: #f4f7fc;
   border-radius: 12px;

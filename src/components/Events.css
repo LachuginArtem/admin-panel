@@ -1,11 +1,11 @@
-/* Контейнер мероприятий */
+
 .events-container {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     padding: 20px;
     max-width: 2000px;
-    margin-left: 70px;
+    margin-left: 110px;
   }
   
   h1 {

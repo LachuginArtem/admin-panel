@@ -1,79 +1,77 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Chart, registerables } from 'chart.js';
-import './UsersTab.css';
+import React, { useEffect, useState, useRef } from "react";
+import { Chart, registerables } from "chart.js";
+import "./UsersTab.css";
 Chart.register(...registerables);
+
+const BOT_API_URL = process.env.REACT_APP_BOT_API_URL;
 
 const UsersTab = () => {
   const [subscribers, setSubscribers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [messageCount, setMessageCount] = useState(0);
   const [dailyMessageStats, setDailyMessageStats] = useState({ labels: [], counts: [] });
-  const [userId, setUserId] = useState('');
+  const [userId, setUserId] = useState("");
   const [userMessages, setUserMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [isHistoryVisible, setIsHistoryVisible] = useState(true);
+  const [userMessageCount, setUserMessageCount] = useState(0);
   const chartRef = useRef(null);
-  const limit = 3; 
-
+  const limit = 10;
 
   useEffect(() => {
-    fetch('https://tyuiu-rag-bot-production.up.railway.app/api/v1/subscribers/')
+    fetch(`${BOT_API_URL}/contacts/`)
       .then((response) => response.json())
       .then((data) => {
         setSubscribers(data.contacts);
         setLoading(false);
       })
       .catch((error) => {
-        console.error('Ошибка при загрузке данных:', error);
+        console.error("Ошибка при загрузке данных:", error);
         setLoading(false);
       });
   }, []);
 
-
   useEffect(() => {
-    fetch('https://tyuiu-rag-bot-production.up.railway.app/api/v1/messages/count/')
+    fetch(`${BOT_API_URL}/chats/count/`)
       .then((response) => response.json())
       .then((data) => {
         setMessageCount(data.count || 0);
       })
       .catch((error) => {
-        console.error('Ошибка при загрузке количества сообщений:', error);
+        console.error("Ошибка при загрузке количества сообщений:", error);
       });
   }, []);
 
- 
   useEffect(() => {
-    fetch('https://tyuiu-rag-bot-production.up.railway.app/api/v1/messages/count-per-day/')
+    fetch(`${BOT_API_URL}/chats/per-day-count/`)
       .then((response) => response.json())
       .then((data) => {
-        const stats = data.count_per_day || {};
-        const labels = Object.keys(stats);
-        const counts = Object.values(stats);
+        const stats = data.distribution || [];
+        const labels = stats.map((entry) => entry.date.split("T")[0]);
+        const counts = stats.map((entry) => entry.count);
         setDailyMessageStats({ labels, counts });
       })
       .catch((error) => {
-        console.error('Ошибка при загрузке статистики сообщений:', error);
+        console.error("Ошибка при загрузке статистики сообщений:", error);
       });
   }, []);
 
-  
   useEffect(() => {
-    const ctx = document.getElementById('messagesChart').getContext('2d');
+    const ctx = document.getElementById("messagesChart").getContext("2d");
     if (chartRef.current) {
       chartRef.current.destroy();
     }
     chartRef.current = new Chart(ctx, {
-      type: 'bar',
+      type: "bar",
       data: {
         labels: dailyMessageStats.labels,
         datasets: [
           {
-            label: 'Сообщений за день',
+            label: "Сообщений за день",
             data: dailyMessageStats.counts,
-            backgroundColor: 'rgba(75, 192, 192, 0.6)',
-            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: "rgba(75, 192, 192, 0.6)",
+            borderColor: "rgba(75, 192, 192, 1)",
             borderWidth: 1,
           },
         ],
@@ -83,14 +81,14 @@ const UsersTab = () => {
           x: {
             title: {
               display: true,
-              text: 'Дата',
+              text: "Дата",
             },
           },
           y: {
             beginAtZero: true,
             title: {
               display: true,
-              text: 'Количество сообщений',
+              text: "Количество сообщений",
             },
           },
         },
@@ -98,59 +96,79 @@ const UsersTab = () => {
     });
   }, [dailyMessageStats]);
 
+  const fetchUserMessages = async (page = 1) => {
+    if (!userId) {
+      return;
+    }
 
-  const fetchUserMessages = (page = 1) => {
     setLoadingMessages(true);
 
-    fetch(`https://tyuiu-rag-bot-production.up.railway.app/api/v1/messages/${userId}/?page=${page}&limit=${limit}`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error('Ошибка сети');
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setUserMessages(data.messages || []);
-        setCurrentPage(data.page || 1);
+    try {
+      const response = await fetch(
+        `${BOT_API_URL}/chats/${userId}/?is_paginated=true&page=${page}&limit=${limit}`
+      );
 
-        const totalMessages = data.total || data.messages.length;
-        const calculatedTotalPages = Math.ceil(totalMessages / limit);
-        setTotalPages(calculatedTotalPages);
+      if (!response.ok) {
+        throw new Error("Ошибка сети");
+      }
 
-        setLoadingMessages(false);
-      })
-      .catch((error) => {
-        console.error('Ошибка при загрузке сообщений пользователя:', error);
-        setLoadingMessages(false);
-      });
+      const data = await response.json();
+
+      if (!data.dialogs) {
+        throw new Error("Неверный формат ответа API");
+      }
+
+      setUserMessages(data.dialogs);
+      setCurrentPage(page);
+
+      // Обновляем totalPages на основе данных от API
+      const totalMessages = data.total || 0; // Используем 0, если total не указан
+      setTotalPages(Math.ceil(totalMessages / limit));
+    } catch (error) {
+      console.error("Ошибка при загрузке сообщений пользователя:", error);
+    } finally {
+      setLoadingMessages(false);
+    }
   };
 
+  const fetchUserMessageCount = async () => {
+    if (!userId) return;
+
+    try {
+      const response = await fetch(
+        `${BOT_API_URL}/chats/${userId}/count/`
+      );
+
+      if (!response.ok) {
+        throw new Error("Ошибка сети");
+      }
+
+      const data = await response.json();
+      setUserMessageCount(data.count || 0);
+    } catch (error) {
+      console.error("Ошибка при загрузке количества сообщений пользователя:", error);
+    }
+  };
 
   const handlePrevPage = () => {
     if (currentPage > 1) {
-      const prevPage = currentPage - 1;
-      setCurrentPage(prevPage);
-      fetchUserMessages(prevPage);
+      fetchUserMessages(currentPage - 1);
     }
   };
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
-      const nextPage = currentPage + 1;
-      setCurrentPage(nextPage);
-      fetchUserMessages(nextPage);
+      fetchUserMessages(currentPage + 1);
     }
   };
 
- 
-  const toggleHistoryVisibility = () => {
-    setIsHistoryVisible(!isHistoryVisible);
-  };
-
-
   const selectUser = (id) => {
     setUserId(id);
-    setIsHistoryVisible(true);
+    setCurrentPage(1); // Сбрасываем текущую страницу на первую
+    setTotalPages(1); // Сбрасываем общее количество страниц
+    setUserMessages([]); // Очищаем сообщения
+    fetchUserMessages(1); // Загружаем сообщения для первой страницы
+    fetchUserMessageCount(); // Загружаем количество сообщений пользователя
   };
 
   return (
@@ -195,52 +213,73 @@ const UsersTab = () => {
 
       <div className="right-panel">
         <h1>История сообщений</h1>
-        <button onClick={toggleHistoryVisibility} className="toggle-history-button">
-          {isHistoryVisible ? 'Скрыть историю' : 'Показать историю'}
+        <input
+          type="text"
+          placeholder="Введите ID пользователя"
+          value={userId}
+          onChange={(e) => setUserId(e.target.value)}
+          className="input-field"
+        />
+        <button
+          onClick={() => {
+            setCurrentPage(1); // Сбрасываем текущую страницу на первую
+            setTotalPages(1); // Сбрасываем общее количество страниц
+            setUserMessages([]); // Очищаем сообщения
+            fetchUserMessages(1); // Загружаем сообщения для первой страницы
+            fetchUserMessageCount(); // Загружаем количество сообщений пользователя
+          }}
+          className="fetch-button"
+        >
+          Показать сообщения
         </button>
 
-        {isHistoryVisible && (
-          <>
-            <input
-              type="text"
-              placeholder="Введите ID пользователя"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              className="input-field"
-              />
-              <button onClick={() => fetchUserMessages(1)} className="fetch-button">
-                Показать сообщения
-              </button>
-  
-              {loadingMessages ? (
-                <p>Загрузка сообщений...</p>
-              ) : (
-                <div className="message-history">
-                  {userMessages.length > 0 ? (
-                    userMessages.map((message, index) => (
-                      <div key={index} className="message-card">
-                        <p><strong>ID пользователя:</strong> {message.user_id}</p>
-                        <p><strong>Сообщение пользователя:</strong> {message.user_message}</p>
-                        <p><strong>Ответ бота:</strong> {message.bot_message}</p>
-                        <p><strong>Дата:</strong> {new Date(message.created_at).toLocaleString()}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <p>Сообщений нет.</p>
-                  )}
+        {userId && (
+          <div className="user-message-count">
+            <p>Общее количество сообщений пользователя: <strong>{userMessageCount}</strong></p>
+          </div>
+        )}
+
+        {loadingMessages ? (
+          <p>Загрузка сообщений...</p>
+        ) : (
+          <div className="message-history">
+            {userMessages.length > 0 ? (
+              userMessages.map((message, index) => (
+                <div key={index} className="message-card">
+                  <p><strong>ID пользователя:</strong> {message.user_id}</p>
+                  <p><strong>Сообщение пользователя:</strong> {message.user_message}</p>
+                  <p><strong>Ответ бота:</strong> {message.bot_message || message.chatbot_message}</p>
+                  <p><strong>Дата:</strong> {new Date(message.created_at).toLocaleString()}</p>
                 </div>
-              )}
-  
-              <div className="pagination">
-                <button onClick={handlePrevPage} disabled={currentPage === 1}>Назад</button>
-                <span>Страница {currentPage} из {totalPages}</span>
-                <button onClick={handleNextPage} disabled={currentPage === totalPages}>Вперед</button>
-              </div>
-            </>
-          )}
+              ))
+            ) : (
+              <p>Сообщений нет.</p>
+            )}
+          </div>
+        )}
+
+        <div className="pagination">
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+            className="pagination-button"
+          >
+            Назад
+          </button>
+          <span className="pagination-info">
+            Страница {currentPage} из {totalPages}
+          </span>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className="pagination-button"
+          >
+            Вперед
+          </button>
         </div>
       </div>
-    );
-  };
-  
-  export default UsersTab;
+    </div>
+  );
+};
+
+export default UsersTab;

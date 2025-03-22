@@ -9,19 +9,19 @@ function Sidebar() {
       <ul>
         <li>
           <Link to="/" className="sidebar-link">
-            <FaHome className="icon" title="Главная" />
+            <FaHome className="icon"/>
             <span className="tooltip">Главная</span>
           </Link>
         </li>
         <li>
           <Link to="/users" className="sidebar-link">
-            <FaUsers className="icon" title="Пользователи" />
+            <FaUsers className="icon"/>
             <span className="tooltip">Пользователи</span>
           </Link>
         </li>
         <li>
           <Link to="/events" className="sidebar-link">
-            <FaCalendarAlt className="icon" title="Мероприятия" />
+            <FaCalendarAlt className="icon"/>
             <span className="tooltip">Мероприятия</span>
           </Link>
         </li>

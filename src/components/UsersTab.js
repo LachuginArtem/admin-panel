@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Chart, registerables } from "chart.js";
+import { isAuthenticated, fetchWithAuth } from "./auth";
 import "./UsersTab.css";
+
 Chart.register(...registerables);
 
 const BOT_API_URL = process.env.REACT_APP_BOT_API_URL;
@@ -18,9 +21,16 @@ const UsersTab = () => {
   const [userMessageCount, setUserMessageCount] = useState(0);
   const chartRef = useRef(null);
   const limit = 10;
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${BOT_API_URL}/contacts/`)
+    if (!isAuthenticated()) {
+      navigate('/login');
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    fetchWithAuth(`${BOT_API_URL}/contacts/`)
       .then((response) => response.json())
       .then((data) => {
         setSubscribers(data.contacts);
@@ -33,7 +43,7 @@ const UsersTab = () => {
   }, []);
 
   useEffect(() => {
-    fetch(`${BOT_API_URL}/chats/count/`)
+    fetchWithAuth(`${BOT_API_URL}/chats/count/`)
       .then((response) => response.json())
       .then((data) => {
         setMessageCount(data.count || 0);
@@ -44,7 +54,7 @@ const UsersTab = () => {
   }, []);
 
   useEffect(() => {
-    fetch(`${BOT_API_URL}/chats/per-day-count/`)
+    fetchWithAuth(`${BOT_API_URL}/chats/per-day-count/`)
       .then((response) => response.json())
       .then((data) => {
         const stats = data.distribution || [];
@@ -97,14 +107,12 @@ const UsersTab = () => {
   }, [dailyMessageStats]);
 
   const fetchUserMessages = async (page = 1) => {
-    if (!userId) {
-      return;
-    }
+    if (!userId) return;
 
     setLoadingMessages(true);
 
     try {
-      const response = await fetch(
+      const response = await fetchWithAuth(
         `${BOT_API_URL}/chats/${userId}/?is_paginated=true&page=${page}&limit=${limit}`
       );
 
@@ -121,8 +129,7 @@ const UsersTab = () => {
       setUserMessages(data.dialogs);
       setCurrentPage(page);
 
-      // Обновляем totalPages на основе данных от API
-      const totalMessages = data.total || 0; // Используем 0, если total не указан
+      const totalMessages = data.total || 0;
       setTotalPages(Math.ceil(totalMessages / limit));
     } catch (error) {
       console.error("Ошибка при загрузке сообщений пользователя:", error);
@@ -135,7 +142,7 @@ const UsersTab = () => {
     if (!userId) return;
 
     try {
-      const response = await fetch(
+      const response = await fetchWithAuth(
         `${BOT_API_URL}/chats/${userId}/count/`
       );
 
@@ -164,11 +171,11 @@ const UsersTab = () => {
 
   const selectUser = (id) => {
     setUserId(id);
-    setCurrentPage(1); // Сбрасываем текущую страницу на первую
-    setTotalPages(1); // Сбрасываем общее количество страниц
-    setUserMessages([]); // Очищаем сообщения
-    fetchUserMessages(1); // Загружаем сообщения для первой страницы
-    fetchUserMessageCount(); // Загружаем количество сообщений пользователя
+    setCurrentPage(1);
+    setTotalPages(1);
+    setUserMessages([]);
+    fetchUserMessages(1);
+    fetchUserMessageCount();
   };
 
   return (
@@ -222,11 +229,11 @@ const UsersTab = () => {
         />
         <button
           onClick={() => {
-            setCurrentPage(1); // Сбрасываем текущую страницу на первую
-            setTotalPages(1); // Сбрасываем общее количество страниц
-            setUserMessages([]); // Очищаем сообщения
-            fetchUserMessages(1); // Загружаем сообщения для первой страницы
-            fetchUserMessageCount(); // Загружаем количество сообщений пользователя
+            setCurrentPage(1);
+            setTotalPages(1);
+            setUserMessages([]);
+            fetchUserMessages(1);
+            fetchUserMessageCount();
           }}
           className="fetch-button"
         >

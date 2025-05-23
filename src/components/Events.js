@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { isAuthenticated, fetchWithAuth } from "./auth";
 import "./Events.css";
 
-const EVENTS_API_URL = "https://events-zisi.onrender.com/api/v1";
+const EVENTS_API_URL = "https://admin-panel-ik40.onrender.com/api/v1";
 
 const Events = () => {
   const [events, setEvents] = useState([]);
@@ -21,17 +23,25 @@ const Events = () => {
   const eventsPerPage = 9;
   const [error, setError] = useState(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate("/login");
+    }
+  }, [navigate]);
 
   const fetchEvents = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(
+
+      const response = await fetchWithAuth(
         `${EVENTS_API_URL}/events/get/?is_paginated=true&page=${currentPage}&limit=${eventsPerPage}`
       );
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP ошибка! Статус: ${response.status}`);
       }
 
       const data = await response.json();
@@ -76,12 +86,11 @@ const Events = () => {
       return;
     }
 
-    // Формирование локального ISO времени без смещения UTC
     const localDateTime = new Date(`${newEvent.date}T${newEvent.time}`);
     const isoDateTime = localDateTime.toISOString();
 
     try {
-      const response = await fetch(`${EVENTS_API_URL}/events/add/`, {
+      const response = await fetchWithAuth(`${EVENTS_API_URL}/events/add/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -94,10 +103,16 @@ const Events = () => {
         })
       });
 
-      const result = await response.json();
+      // Проверка типа контента перед попыткой распарсить JSON
+      let result = null;
+      const contentType = response.headers.get("Content-Type");
+      if (contentType && contentType.includes("application/json")) {
+        result = await response.json();
+      }
 
       if (!response.ok) {
-        throw new Error(result.body || "Ошибка при добавлении мероприятия");
+        const errorMsg = result?.body || `Ошибка ${response.status}`;
+        throw new Error(errorMsg);
       }
 
       await fetchEvents();
@@ -113,7 +128,7 @@ const Events = () => {
       setModalOpen(false);
     } catch (err) {
       console.error("Ошибка:", err);
-      alert(err.message);
+      alert(err.message || "Ошибка при добавлении мероприятия");
     }
   };
 
@@ -121,7 +136,7 @@ const Events = () => {
     if (!window.confirm("Вы уверены, что хотите удалить это мероприятие?")) return;
 
     try {
-      const response = await fetch(`${EVENTS_API_URL}/events/delete/${eventId}`, {
+      const response = await fetchWithAuth(`${EVENTS_API_URL}/events/delete/${eventId}`, {
         method: "DELETE"
       });
 
@@ -158,13 +173,14 @@ const Events = () => {
         Добавить мероприятие
       </button>
 
+      {/* Модальное окно */}
       {modalOpen && (
         <div className={`modal ${modalOpen ? "open" : ""}`}>
           <div className="modal-content">
             <div className="modal-header">
               <h2>Добавить мероприятие</h2>
               <button className="close-button" onClick={() => setModalOpen(false)}>
-                &times;
+                ×
               </button>
             </div>
             <div className="modal-body">

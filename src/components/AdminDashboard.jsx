@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Chart, registerables } from 'chart.js';
+import { isAuthenticated, fetchWithAuth } from './auth';
 import './AdminDashboard.css';
 
 Chart.register(...registerables);
 
-// Переменные из .env
 const BOT_API_URL = process.env.REACT_APP_BOT_API_URL;
 const NOTIFY_API_URL = process.env.REACT_APP_NOTIFY_API_URL;
 
@@ -12,29 +13,34 @@ const AdminDashboard = () => {
   const [recipientType, setRecipientType] = useState('all');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [message, setMessage] = useState('');
-
   const [userCount, setUserCount] = useState(0);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [dailyUserGrowth, setDailyUserGrowth] = useState({ labels: [], counts: [] });
-
   const chartRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${BOT_API_URL}/contacts/count/`)
+    if (!isAuthenticated()) {
+      navigate('/login');
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    fetchWithAuth(`${BOT_API_URL}/contacts/count/`)
       .then(res => res.json())
       .then(data => setSubscriberCount(data.count || 0))
       .catch(err => console.error('Ошибка загрузки количества подписчиков:', err));
   }, []);
 
   useEffect(() => {
-    fetch(`${BOT_API_URL}/users/count/`)
+    fetchWithAuth(`${BOT_API_URL}/users/count/`)
       .then(res => res.json())
       .then(data => setUserCount(data.count || 0))
       .catch(err => console.error('Ошибка загрузки количества пользователей:', err));
   }, []);
 
   useEffect(() => {
-    fetch(`${BOT_API_URL}/users/per-day-count/`)
+    fetchWithAuth(`${BOT_API_URL}/users/per-day-count/`)
       .then(res => res.json())
       .then(data => {
         const dist = data.distribution || [];
@@ -82,7 +88,7 @@ const AdminDashboard = () => {
     });
   }, [dailyUserGrowth]);
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
 
     if (!message || (recipientType === 'phone' && !phoneNumber)) {
@@ -100,24 +106,23 @@ const AdminDashboard = () => {
         ? { text: message }
         : { text: message, phone_number: phoneNumber };
 
-    fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
-        return response.json();
-      })
-      .then((data) => {
-        alert('Сообщение успешно отправлено');
-        setMessage('');
-        setPhoneNumber('');
-      })
-      .catch((error) => {
-        console.error('Ошибка отправки сообщения: ', error);
-        alert('Что-то пошло не так. Попробуйте позже.');
+    try {
+      const response = await fetchWithAuth(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
       });
+
+      if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
+      await response.json();
+
+      alert('Сообщение успешно отправлено');
+      setMessage('');
+      setPhoneNumber('');
+    } catch (error) {
+      console.error('Ошибка отправки сообщения: ', error);
+      alert('Что-то пошло не так. Попробуйте позже.');
+    }
   };
 
   const subscriberPercentage = userCount > 0 ? (subscriberCount / userCount) * 100 : 0;

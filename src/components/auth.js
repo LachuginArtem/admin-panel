@@ -10,10 +10,10 @@ export const getAccessToken = () => localStorage.getItem('accessToken');
 export const getRefreshToken = () => localStorage.getItem('refreshToken');
 
 export const fetchWithAuth = async (url, options = {}) => {
-  let token = getAccessToken();
-
+  let tempAccessToken = getAccessToken();
+  let tempRefreshToken = getRefreshToken()
   // Проверяем наличие токена
-  if (!token) {
+  if (!tempAccessToken) {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     window.location.href = '/login';
@@ -22,9 +22,11 @@ export const fetchWithAuth = async (url, options = {}) => {
 
   // Формируем заголовки, сохраняя Content-Type из options или задавая по умолчанию
   const headers = {
-    'Content-Type': 'application/json', // По умолчанию для большинства запросов
+     // По умолчанию для большинства запросов
     ...(options.headers || {}), // Сохраняем переданные заголовки
-    Authorization: `Bearer ${token}`, // Добавляем токен
+   "Content-Type": "application/json",
+        "X-Access-Token": tempAccessToken,
+        "X-Refresh-Token": tempRefreshToken, // Добавляем токен
   };
 
   // Выполняем исходный запрос
@@ -63,14 +65,15 @@ export const fetchWithAuth = async (url, options = {}) => {
       if (refreshRes.ok && refreshData.access) {
         // Сохраняем новый accessToken
         localStorage.setItem('accessToken', refreshData.access);
-        token = refreshData.access;
-
+        tempAccessToken = refreshData.access;
+        
         // Повторяем исходный запрос с новым токеном
         response = await fetch(url, {
           ...options,
           headers: {
             ...(options.headers || {}),
-            Authorization: `Bearer ${token}`,
+            "X-Access-Token": tempAccessToken,
+        "X-Refresh-Token": tempRefreshToken, // Добавляем токен
           },
         });
       } else {

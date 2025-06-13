@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { isAuthenticated, fetchWithAuth } from "./auth";
 import "./Events.css";
 
-const EVENTS_API_URL = "https://admin-panel-ik40.onrender.com/api/v1";
+const EVENTS_API_URL = "http://192.168.16.222:7002/api/v1";
 
 const Events = () => {
   const [events, setEvents] = useState([]);
@@ -31,42 +31,37 @@ const Events = () => {
     }
   }, [navigate]);
 
-  const fetchEvents = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+ const fetchEvents = useCallback(async () => {
+  try {
+    setLoading(true);
+    setError(null);
 
-      const response = await fetchWithAuth(
-        `${EVENTS_API_URL}/events/get/?is_paginated=true&page=${currentPage}&limit=${eventsPerPage}`
-      );
+    const response = await fetchWithAuth(
+      `${EVENTS_API_URL}/events/get/?is_paginated=true&page=${currentPage}&limit=${eventsPerPage}`
+    );
 
-      if (!response.ok) {
-        throw new Error(`HTTP ошибка! Статус: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data && data.status === "success" && data.body) {
-        if (Array.isArray(data.body)) {
-          setEvents(data.body);
-          setTotalPages(1);
-        } else if (data.body.events && Array.isArray(data.body.events)) {
-          setEvents(data.body.events);
-          setTotalPages(data.body.total_pages || 1);
-        } else {
-          throw new Error("Неверная структура данных в ответе");
-        }
-      } else {
-        throw new Error(data.body || "Ошибка при загрузке мероприятий");
-      }
-    } catch (err) {
-      console.error("Ошибка загрузки мероприятий:", err);
-      setError(err.message);
-      setEvents([]);
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      throw new Error(`HTTP ошибка! Статус: ${response.status}`);
     }
-  }, [currentPage, eventsPerPage]);
+
+    const data = await response.json();
+    console.log(data);
+
+    // Проверка структуры данных
+    if (data && data.event && Array.isArray(data.event)) {
+      setEvents(data.event);
+      setTotalPages(data.total_pages || 1);
+    } else {
+      throw new Error("Неверная структура данных в ответе");
+    }
+  } catch (err) {
+    console.error("Ошибка загрузки мероприятий:", err);
+    setError(err.message || "Неизвестная ошибка при загрузке мероприятий");
+    setEvents([]);
+  } finally {
+    setLoading(false);
+  }
+}, [currentPage, eventsPerPage]);
 
   useEffect(() => {
     fetchEvents();
@@ -111,7 +106,7 @@ const Events = () => {
       }
 
       if (!response.ok) {
-        const errorMsg = result?.body || `Ошибка ${response.status}`;
+        const errorMsg = result || `Ошибка ${response.status}`;
         throw new Error(errorMsg);
       }
 

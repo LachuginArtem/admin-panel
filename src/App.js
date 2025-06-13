@@ -1,20 +1,19 @@
 import './App.css';
 import Sidebar from './components/Sidebar';
-import AdminDashboard from './components/AdminDashboard';
-import UsersTab from './components/UsersTab';
+import UnifiedDashboard from './components/UnifiedDashboard';
 import Events from "./components/Events";
 import News from "./components/News";
 import Camera from "./components/Camera";
 import NotFound from "./components/NotFound";
-import Login from "./components/Login"; // Новый компонент для авторизации
+import Login from "./components/Login";
 import { Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import './index.css';
-import PrivateRoute from './components/PrivateRoute'; // Компонент для защиты маршрутов
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   const location = useLocation();
   const isAuthPage = location.pathname === '/login';
-  const protectedRoutes = ["/", "/users", "/events", "/news"];
+  const protectedRoutes = ["/", "/events", "/news", "/camera"];
   const isProtectedRoute = protectedRoutes.includes(location.pathname);
 
   return (
@@ -30,12 +29,7 @@ function App() {
           {/* Защищенные маршруты */}
           <Route path="/" element={
             <PrivateRoute>
-              <AdminDashboard />
-            </PrivateRoute>
-          } />
-          <Route path="/users" element={
-            <PrivateRoute>
-              <UsersTab />
+              <UnifiedDashboard />
             </PrivateRoute>
           } />
           <Route path="/events" element={

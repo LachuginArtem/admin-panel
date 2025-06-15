@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated, fetchWithAuth } from "./auth";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./News.css";
 
 const NEWS_API_URL = "http://192.168.16.222:7002/api/v1";
-
 
 const News = () => {
   const [news, setNews] = useState([]);
@@ -17,9 +18,9 @@ const News = () => {
   const [error, setError] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [expandedBodies, setExpandedBodies] = useState({});
+  const [confirmDeleteModal, setConfirmDeleteModal] = useState({ open: false, newsId: null });
   const navigate = useNavigate();
 
-  // Проверка аутентификации
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate("/login");
@@ -33,7 +34,6 @@ const News = () => {
     }));
   };
 
-  // Загрузка новостей
   const fetchNews = useCallback(async () => {
     try {
       setLoading(true);
@@ -76,17 +76,22 @@ const News = () => {
     fetchNews();
   }, [fetchNews]);
 
-  // Обработка ввода
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewNews((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Обработка изображения
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Файл слишком большой. Максимальный размер: 2 МБ.");
+        return;
+      }
+      if (!["image/png", "image/jpeg"].includes(file.type)) {
+        toast.error("Поддерживаются только PNG и JPEG изображения.");
+        return;
+      }
       setNewNews((prev) => ({ ...prev, image: file }));
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result);
@@ -94,59 +99,67 @@ const News = () => {
     }
   };
 
-  // Добавление новости
+  const validateForm = () => {
+    if (!newNews.title.trim()) {
+      toast.error("Заголовок обязателен.");
+      return false;
+    }
+    if (!newNews.body.trim()) {
+      toast.error("Текст новости обязателен.");
+      return false;
+    }
+    return true;
+  };
+
   const addNews = async () => {
-  try {
-    const formData = new FormData();
-    formData.append("title", newNews.title.trim());
-    formData.append("body", newNews.body.trim());
-    if (newNews.image && newNews.image instanceof File) {
-      formData.append("image", newNews.image, newNews.image.name);
-    }
+    if (!validateForm()) return;
 
-   
-
-    const response = await fetch(`https://events-zisi.onrender.com/api/v1/news/add/`, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-      },
-      body: formData,
-    });
-
-    if (response.status === 201) {
-      await fetchNews();
-      setNewNews({ title: "", body: "", image: null });
-      setImagePreview(null);
-      setModalOpen(false);
-      alert("Новость успешно добавлена!");
-    } else {
-      let errorMessage = `Ошибка при добавлении новости (status: ${response.status})`;
-      try {
-        const errorData = await response.json();
-        console.error("API error response:", errorData);
-        errorMessage = errorData.detail
-          ? Array.isArray(errorData.detail)
-            ? errorData.detail
-                .map((error) => (typeof error === "string" ? error : `${error.loc?.join(".")}: ${error.msg}`))
-                .join("\n")
-            : errorData.detail
-          : errorMessage;
-      } catch (e) {
-        console.error("Failed to parse error response:", e);
+    try {
+      const formData = new FormData();
+      formData.append("title", newNews.title.trim());
+      formData.append("body", newNews.body.trim());
+      if (newNews.image && newNews.image instanceof File) {
+        formData.append("image", newNews.image, newNews.image.name);
       }
-      throw new Error(errorMessage);
+
+      const response = await fetch(`${NEWS_API_URL}/news/add/`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+        },
+        body: formData,
+      });
+
+      if (response.status === 201) {
+        await fetchNews();
+        setNewNews({ title: "", body: "", image: null });
+        setImagePreview(null);
+        setModalOpen(false);
+        toast.success("Новость успешно добавлена!");
+      } else {
+        let errorMessage = `Ошибка при добавлении новости (status: ${response.status})`;
+        try {
+          const errorData = await response.json();
+          console.error("API error response:", errorData);
+          errorMessage = errorData.detail
+            ? Array.isArray(errorData.detail)
+              ? errorData.detail
+                  .map((error) => (typeof error === "string" ? error : `${error.loc?.join(".")}: ${error.msg}`))
+                  .join("\n")
+              : errorData.detail
+            : errorMessage;
+        } catch (e) {
+          console.error("Failed to parse error response:", e);
+        }
+        throw new Error(errorMessage);
+      }
+    } catch (err) {
+      console.error("Ошибка добавления:", err);
+      toast.error(`Ошибка: ${err.message}`);
     }
-  } catch (err) {
-    console.error("Ошибка добавления:", err);
-    alert(`Ошибка: ${err.message}`);
-  }
-};
+  };
 
-  // Удаление новости
   const deleteNews = async (newsId) => {
-    if (!window.confirm("Вы уверены, что хотите удалить эту новость?")) return;
-
     try {
       const response = await fetchWithAuth(`${NEWS_API_URL}/news/delete/${newsId}`, {
         method: "DELETE",
@@ -164,26 +177,35 @@ const News = () => {
       } else {
         await fetchNews();
       }
-      alert("Новость успешно удалена!");
+      toast.success("Новость успешно удалена!");
     } catch (err) {
       console.error("Ошибка удаления:", err);
-      alert(`Ошибка: ${err.message}`);
+      toast.error(`Ошибка: ${err.message}`);
+    } finally {
+      setConfirmDeleteModal({ open: false, newsId: null });
     }
   };
 
-  // Пагинация
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
   return (
     <div className="news-container">
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        theme="colored"
+      />
       <h1>Новости</h1>
       <button className="add-news-button" onClick={() => setModalOpen(true)}>
         Добавить новость
       </button>
 
-      {/* Модальное окно добавления */}
       {modalOpen && (
         <div className={`modal ${modalOpen ? "open" : ""}`}>
           <div className="modal-content">
@@ -209,8 +231,12 @@ const News = () => {
                 onChange={handleInputChange}
                 required
               />
-              <label className="label-left">Изображение (необязательно)</label>
-              <input type="file" accept="image/png" onChange={handleImageChange} />
+              <label className="label-left">Изображение (PNG или JPEG, до 2 МБ)</label>
+              <input
+                type="file"
+                accept="image/png,image/jpeg"
+                onChange={handleImageChange}
+              />
               {imagePreview && (
                 <div className="image-preview">
                   <img src={imagePreview} alt="Превью" />
@@ -229,21 +255,54 @@ const News = () => {
         </div>
       )}
 
-      {/* Загрузка */}
+      {confirmDeleteModal.open && (
+        <div className="modal open" onClick={(e) => e.target.classList.contains('modal') && setConfirmDeleteModal({ open: false, newsId: null })}>
+          <div className="modal-content confirm-modal">
+            <div className="modal-header">
+              <h2>Подтверждение удаления</h2>
+              <button 
+                className="close-button" 
+                onClick={() => setConfirmDeleteModal({ open: false, newsId: null })}
+                aria-label="Закрыть модальное окно"
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>Вы уверены, что хотите удалить эту новость?</p>
+            </div>
+            <div className="modal-footer">
+              <button 
+                className="cancel-button" 
+                onClick={() => setConfirmDeleteModal({ open: false, newsId: null })}
+                aria-label="Отменить удаление"
+              >
+                Отмена
+              </button>
+              <button 
+                className="delete-confirm-button" 
+                onClick={() => deleteNews(confirmDeleteModal.newsId)}
+                aria-label="Подтвердить удаление"
+              >
+                Удалить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {loading && (
         <div className="loader-container">
           <div className="loader"></div>
         </div>
       )}
 
-      {/* Ошибка */}
       {error && (
         <div className="error-message">
           Ошибка: {error} <button onClick={fetchNews}>Повторить</button>
         </div>
       )}
 
-      {/* Список новостей */}
       {!loading && !error && (
         <>
           <div className="news-grid">
@@ -258,13 +317,13 @@ const News = () => {
                   <div className="news-content">
                     <h3>{item.title}</h3>
                     <button className="show-body-button" onClick={() => toggleBody(item.id)}>
-                      {expandedBodies[item.id] ? "Скрыть текст" : "Показать текст"}
+                      {expandedBodies[item.id] ? "Скрыть текст" : "Показать описание"}
                     </button>
                     <div className={`news-body-container ${expandedBodies[item.id] ? "expanded" : ""}`}>
                       <p className="news-body">{item.body}</p>
                     </div>
                     <p className="news-date">{new Date(item.created_at).toLocaleDateString()}</p>
-                    <button className="delete-button" onClick={() => deleteNews(item.id)}>
+                    <button className="delete-button" onClick={() => setConfirmDeleteModal({ open: true, newsId: item.id })}>
                       Удалить
                     </button>
                   </div>
@@ -275,7 +334,6 @@ const News = () => {
             )}
           </div>
 
-          {/* Пагинация */}
           {totalPages > 1 && (
             <div className="pagination">
               <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>

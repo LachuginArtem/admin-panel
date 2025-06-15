@@ -48,7 +48,7 @@ export const fetchWithAuth = async (url, options = {}) => {
     }
 
     try {
-      const refreshRes = await fetch('https://registration-s6rk.onrender.com/api/v1/authorizations/refresh', {
+      const refreshRes = await fetch('http://192.168.16.222:7000/api/v1/authorizations/refresh', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh: refreshToken }),

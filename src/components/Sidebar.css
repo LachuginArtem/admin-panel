@@ -16,7 +16,7 @@ body {
   height: 100vh;
   background: linear-gradient(to bottom, #042da8, #2a5cf1);
   color: #fff;
-  padding-top: 60px; /* Увеличено, чтобы иконки начинались ниже кнопки */
+  padding-top: 20px; /* Уменьшенный отступ для десктопа */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -86,12 +86,12 @@ body {
 .toggle-button {
   display: none;
   position: fixed;
-  top: 15px;
-  left: 15px;
+  top: 14px;
+  left: 23px;
   background: linear-gradient(to bottom, #042da8, #2a5cf1);
   border: none;
   border-radius: 6px;
-  padding: 10px;
+  padding: 5px;
   cursor: pointer;
   z-index: 10000;
   box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
@@ -133,6 +133,7 @@ body {
   .sidebar {
     width: 80px;
     transform: translateX(-100%);
+    padding-top: 60px; /* Восстанавливаем отступ для мобильных */
   }
 
   .sidebar.open {
@@ -144,7 +145,7 @@ body {
   }
 
   .sidebar.open ~ .toggle-button {
-    left: 105px; /* Сдвигаем кнопку дальше вправо, чтобы не пересекалась с иконками */
+    left: 105px;
   }
 
   .sidebar li {

@@ -34,7 +34,6 @@
   position: relative;
 }
 
-/* Сообщение об ошибке */
 .camera-wrapper .error-message {
   color: #e74c3c;
   background-color: #fdecea;
@@ -44,6 +43,23 @@
   text-align: center;
   font-size: 0.9rem;
   line-height: 1.4;
+  width: 100%; /* Соответствует ширине .scanner-viewport */
+  max-width: 100%; /* Ограничение по родителю */
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .camera-wrapper .error-message {
+    width: 90vw; /* Соответствует max-width .scanner-viewport */
+    margin: 0.5rem auto; /* Выравнивание по центру */
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .camera-wrapper .error-message {
+    background-color: #4a1a1a;
+    color: #ff9999;
+  }
 }
 
 /* Кнопки */
